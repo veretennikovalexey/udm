@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Удмурт кыл</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700;900&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:       #0f0e0c;
+      --surface:  #1a1814;
+      --gold:     #e8a835;
+      --rust:     #c0522a;
+      --cream:    #f0e8d4;
+      --muted:    #6b6150;
+      --success:  #5dba6e;
+      --wrong:    #d94f4f;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--cream);
+      font-family: 'Noto Serif', serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* decorative background pattern */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(
+          45deg,
+          transparent,
+          transparent 40px,
+          rgba(232,168,53,0.03) 40px,
+          rgba(232,168,53,0.03) 41px
+        ),
+        repeating-linear-gradient(
+          -45deg,
+          transparent,
+          transparent 40px,
+          rgba(192,82,42,0.03) 40px,
+          rgba(192,82,42,0.03) 41px
+        );
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* top ornament bar */
+    .ornament-top {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, var(--rust), var(--gold), var(--rust));
+    }
+
+    .ornament-bottom {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, var(--rust), var(--gold), var(--rust));
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      width: min(600px, 90vw);
+      text-align: center;
+    }
+
+    /* header label */
+    .label {
+      font-family: 'Unbounded', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 2.5rem;
+    }
+
+    /* the big word display */
+    .word-display {
+      font-family: 'Unbounded', sans-serif;
+      font-size: clamp(3.5rem, 12vw, 7rem);
+      font-weight: 900;
+      line-height: 1;
+      color: var(--cream);
+      letter-spacing: -0.02em;
+      min-height: 1.2em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      margin-bottom: 0.6rem;
+    }
+
+    .word-display.fade-out {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+
+    .word-display.fade-in {
+      animation: slideIn 0.35s ease forwards;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* gold underline accent */
+    .accent-line {
+      width: 60px;
+      height: 3px;
+      background: var(--gold);
+      border-radius: 2px;
+      margin-bottom: 3rem;
+      transition: width 0.3s ease;
+    }
+
+    /* input */
+    .input-wrap {
+      width: 100%;
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      background: var(--surface);
+      border: 2px solid var(--muted);
+      border-radius: 4px;
+      color: var(--cream);
+      font-family: 'Unbounded', sans-serif;
+      font-size: clamp(2rem, 7vw, 4rem);
+      font-weight: 700;
+      text-align: center;
+      padding: 0.5em 0.4em;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+      letter-spacing: 0.04em;
+    }
+
+    input[type="text"]::placeholder {
+      color: var(--muted);
+      font-size: 0.55em;
+      letter-spacing: 0.15em;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(232,168,53,0.15);
+    }
+
+    input[type="text"].correct {
+      border-color: var(--success);
+      background: rgba(93,186,110,0.07);
+      box-shadow: 0 0 0 3px rgba(93,186,110,0.15);
+    }
+
+    input[type="text"].wrong {
+      border-color: var(--wrong);
+      animation: shake 0.35s ease;
+    }
+
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%      { transform: translateX(-8px); }
+      40%      { transform: translateX(8px); }
+      60%      { transform: translateX(-5px); }
+      80%      { transform: translateX(5px); }
+    }
+
+    /* button */
+    button {
+      font-family: 'Unbounded', sans-serif;
+      font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--bg);
+      background: var(--gold);
+      border: none;
+      border-radius: 4px;
+      padding: 1em 3em;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      margin-bottom: 2.5rem;
+    }
+
+    button:hover  { background: #f0b840; }
+    button:active { transform: scale(0.97); }
+
+    /* feedback */
+    .feedback {
+      font-family: 'Unbounded', sans-serif;
+      font-size: clamp(2.5rem, 8vw, 4rem);
+      font-weight: 900;
+      min-height: 1.4em;
+      opacity: 0;
+      transform: scale(0.8);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      color: var(--success);
+    }
+
+    .feedback.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .feedback.wrong-text {
+      color: var(--wrong);
+      font-size: clamp(1rem, 3vw, 1.5rem);
+      font-weight: 400;
+      font-family: 'Noto Serif', serif;
+      letter-spacing: 0.02em;
+    }
+
+    /* counter */
+    .counter {
+      position: fixed;
+      top: 1.5rem;
+      right: 2rem;
+      font-family: 'Unbounded', sans-serif;
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      z-index: 2;
+    }
+
+    .counter span { color: var(--gold); }
+  </style>
+</head>
+<body>
+  <div class="ornament-top"></div>
+  <div class="ornament-bottom"></div>
+
+  <div class="counter">серия: <span id="streak">0</span></div>
+
+  <div class="container">
+    <div class="label">переведи на удмуртский</div>
+
+    <div class="word-display fade-in" id="word">...</div>
+    <div class="accent-line" id="accent"></div>
+
+    <div class="input-wrap">
+      <input
+        type="text"
+        id="answer"
+        placeholder="удмурт кылын"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+      />
+    </div>
+
+    <button id="checkBtn">Проверка</button>
+
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+  <script>
+    // Russian → Udmurt
+    const dict = {
+      'я':        'мон',
+      'девушка':  'ныл',
+      'парень':   'пи',
+      'русский':  'ӟуч',
+      'каша':     'ӝук',
+      'татарин':  'бигер',
+      'сорока':   'коӵо',
+      'дверь':    'ӧс',
+      'кузнечик': 'ӟоз',
+      'нет':      'ӧвӧл',
+    };
+
+    const keys = Object.keys(dict);
+    let currentWord = '';
+    let streak = 0;
+    let feedbackTimer = null;
+    let nextTimer = null;
+
+    const wordEl     = document.getElementById('word');
+    const answerEl   = document.getElementById('answer');
+    const feedbackEl = document.getElementById('feedback');
+    const checkBtn   = document.getElementById('checkBtn');
+    const streakEl   = document.getElementById('streak');
+    const accentEl   = document.getElementById('accent');
+
+    function pickWord(exclude) {
+      let pool = keys.filter(k => k !== exclude);
+      return pool[Math.floor(Math.random() * pool.length)];
+    }
+
+    function showWord(word) {
+      wordEl.classList.add('fade-out');
+      setTimeout(() => {
+        wordEl.textContent = word;
+        wordEl.classList.remove('fade-out');
+        wordEl.classList.remove('fade-in');
+        void wordEl.offsetWidth; // reflow
+        wordEl.classList.add('fade-in');
+      }, 260);
+    }
+
+    function nextRound() {
+      const next = pickWord(currentWord);
+      currentWord = next;
+      showWord(currentWord);
+      answerEl.value = '';
+      answerEl.classList.remove('correct', 'wrong');
+      answerEl.disabled = false;
+      clearFeedback();
+      answerEl.focus();
+    }
+
+    function clearFeedback() {
+      feedbackEl.classList.remove('visible', 'wrong-text');
+      feedbackEl.textContent = '';
+    }
+
+    function showFeedback(text, isWrong = false) {
+      clearTimeout(feedbackTimer);
+      clearTimeout(nextTimer);
+      feedbackEl.textContent = text;
+      feedbackEl.classList.toggle('wrong-text', isWrong);
+      void feedbackEl.offsetWidth;
+      feedbackEl.classList.add('visible');
+    }
+
+    function check() {
+      const input = answerEl.value.trim().toLowerCase();
+      const correct = dict[currentWord];
+
+      if (!input) {
+        answerEl.focus();
+        return;
+      }
+
+      if (input === correct) {
+        streak++;
+        streakEl.textContent = streak;
+        answerEl.classList.add('correct');
+        answerEl.disabled = true;
+        showFeedback('Ӟечок!');
+        accentEl.style.width = '120px';
+        nextTimer = setTimeout(() => {
+          accentEl.style.width = '60px';
+          nextRound();
+        }, 1800);
+      } else {
+        streak = 0;
+        streakEl.textContent = streak;
+        answerEl.classList.add('wrong');
+        showFeedback(`правильно: ${correct}`, true);
+        setTimeout(() => answerEl.classList.remove('wrong'), 400);
+        feedbackTimer = setTimeout(() => {
+          nextRound();
+        }, 2500);
+      }
+    }
+
+    checkBtn.addEventListener('click', check);
+    answerEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter') check();
+    });
+
+    // init
+    currentWord = keys[Math.floor(Math.random() * keys.length)];
+    wordEl.textContent = currentWord;
+    answerEl.focus();
+  </script>
+</body>
+</html>
