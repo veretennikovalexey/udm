@@ -318,6 +318,31 @@
       .counter span {
         color: var(--gold);
       }
+
+      /* learned words list */
+      .learned-words {
+        position: fixed;
+        right: 2rem;
+        top: 3rem;
+        font-family: "Unbounded", sans-serif;
+        font-size: 0.6rem;
+        color: var(--muted);
+        letter-spacing: 0.05em;
+        z-index: 2;
+        max-width: 250px;
+        text-align: right;
+        line-height: 1.6;
+      }
+
+      .learned-word {
+        text-decoration: line-through;
+        display: inline-block;
+        margin-left: 0.5rem;
+      }
+
+      .learned-word:after {
+        content: " ";
+      }
     </style>
   </head>
   <body>
@@ -325,6 +350,7 @@
     <div class="ornament-bottom"></div>
 
     <div class="counter">серия: <span id="streak">0</span></div>
+    <div class="learned-words" id="learnedWords"></div>
 
     <div class="container">
       <div class="label">переведи на удмуртский</div>
@@ -346,7 +372,7 @@
 
       <div class="button-group">
         <button id="checkBtn">Проверка</button>
-        <button id="learnedBtn">выучил, больше не показывать</button>
+        <button id="learnedBtn">Выучил(а)!</button>
       </div>
 
       <div class="feedback" id="feedback"></div>
@@ -385,6 +411,7 @@
       const learnedBtn = document.getElementById("learnedBtn");
       const streakEl = document.getElementById("streak");
       const accentEl = document.getElementById("accent");
+      const learnedWordsContainerEl = document.getElementById("learnedWords");
 
       function getAvailableWords() {
         return keys.filter((k) => !learnedWords.has(k));
@@ -488,6 +515,13 @@
 
       learnedBtn.addEventListener("click", () => {
         learnedWords.add(currentWord);
+
+        // Add word to learned words display
+        const wordSpan = document.createElement("span");
+        wordSpan.className = "learned-word";
+        wordSpan.textContent = dict[currentWord];
+        learnedWordsContainerEl.appendChild(wordSpan);
+
         nextRound();
       });
 
