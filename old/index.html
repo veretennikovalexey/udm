@@ -258,24 +258,6 @@
         transform: scale(0.97);
       }
 
-      .button-group {
-        display: flex;
-        gap: 1rem;
-        flex-wrap: wrap;
-        justify-content: center;
-        margin-bottom: 2.5rem;
-      }
-
-      #learnedBtn {
-        background: var(--rust);
-        font-size: clamp(0.75rem, 2vw, 0.9rem);
-        padding: 0.8em 1.5em;
-      }
-
-      #learnedBtn:hover {
-        background: #d66038;
-      }
-
       /* feedback */
       .feedback {
         font-family: "Unbounded", sans-serif;
@@ -344,10 +326,7 @@
         />
       </div>
 
-      <div class="button-group">
-        <button id="checkBtn">Проверка</button>
-        <button id="learnedBtn">выучил, больше не показывать</button>
-      </div>
+      <button id="checkBtn">Проверка</button>
 
       <div class="feedback" id="feedback"></div>
     </div>
@@ -376,37 +355,17 @@
       let streak = 0;
       let feedbackTimer = null;
       let nextTimer = null;
-      let learnedWords = new Set(); // Track learned words
 
       const wordEl = document.getElementById("word");
       const answerEl = document.getElementById("answer");
       const feedbackEl = document.getElementById("feedback");
       const checkBtn = document.getElementById("checkBtn");
-      const learnedBtn = document.getElementById("learnedBtn");
       const streakEl = document.getElementById("streak");
       const accentEl = document.getElementById("accent");
 
-      function getAvailableWords() {
-        return keys.filter((k) => !learnedWords.has(k));
-      }
-
       function pickWord(exclude) {
-        const available = getAvailableWords().filter((k) => k !== exclude);
-        if (available.length === 0) return null;
-        return available[Math.floor(Math.random() * available.length)];
-      }
-
-      function showNoWordsMessage() {
-        wordEl.classList.add("fade-out");
-        setTimeout(() => {
-          wordEl.textContent = "нет слов";
-          wordEl.classList.remove("fade-out");
-          void wordEl.offsetWidth;
-          wordEl.classList.add("fade-in");
-        }, 260);
-        answerEl.disabled = true;
-        checkBtn.disabled = true;
-        learnedBtn.disabled = true;
+        let pool = keys.filter((k) => k !== exclude);
+        return pool[Math.floor(Math.random() * pool.length)];
       }
 
       function showWord(word) {
@@ -422,10 +381,6 @@
 
       function nextRound() {
         const next = pickWord(currentWord);
-        if (next === null) {
-          showNoWordsMessage();
-          return;
-        }
         currentWord = next;
         showWord(currentWord);
         answerEl.value = "";
@@ -484,11 +439,6 @@
       checkBtn.addEventListener("click", check);
       answerEl.addEventListener("keydown", (e) => {
         if (e.key === "Enter") check();
-      });
-
-      learnedBtn.addEventListener("click", () => {
-        learnedWords.add(currentWord);
-        nextRound();
       });
 
       // init
