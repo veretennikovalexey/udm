@@ -515,15 +515,28 @@
       });
 
       learnedBtn.addEventListener("click", () => {
-        learnedWords.add(currentWord);
+        const input = prompt("Пожалуйста, введите слово");
 
-        // Add word to learned words display
-        const wordSpan = document.createElement("span");
-        wordSpan.className = "learned-word";
-        wordSpan.textContent = dict[currentWord];
-        learnedWordsContainerEl.appendChild(wordSpan);
+        // Если пользователь нажал Cancel
+        if (input === null) {
+          return;
+        }
 
-        nextRound();
+        // Проверяем правильность ввода
+        const correct = dict[currentWord];
+        if (input.trim().toLowerCase() === correct) {
+          // Правильно - добавляем слово
+          learnedWords.add(currentWord);
+
+          // Add word to learned words display
+          const wordSpan = document.createElement("span");
+          wordSpan.className = "learned-word";
+          wordSpan.textContent = dict[currentWord];
+          learnedWordsContainerEl.appendChild(wordSpan);
+
+          nextRound();
+        }
+        // Иначе окно закрывается, логика не срабатывает
       });
 
       // init
