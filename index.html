@@ -360,10 +360,19 @@
       }
 
       /* reset button */
-      #resetBtn {
+      .control-buttons {
         position: fixed;
         bottom: 2rem;
         left: 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        z-index: 2;
+      }
+
+      #saveBtn,
+      #loadBtn,
+      #resetBtn {
         background: transparent;
         border: 1px solid var(--muted);
         color: var(--muted);
@@ -375,10 +384,13 @@
         cursor: pointer;
         border-radius: 3px;
         margin-bottom: 0;
-        transition: color 0.2s, border-color 0.2s;
-        z-index: 2;
+        transition:
+          color 0.2s,
+          border-color 0.2s;
       }
 
+      #saveBtn:hover,
+      #loadBtn:hover,
       #resetBtn:hover {
         color: var(--wrong);
         border-color: var(--wrong);
@@ -420,7 +432,12 @@
     </div>
 
     <div class="hint">CTRL+ENTER если знаете слово</div>
-    <button id="resetBtn">Сбросить прогресс</button>
+    <div class="control-buttons">
+      <button id="saveBtn">Сохранить</button>
+      <button id="loadBtn">Загрузить</button>
+      <button id="resetBtn">Сбросить прогресс</button>
+    </div>
+    <input type="file" id="csvInput" accept=".csv" style="display: none" />
 
     <script>
       const STORAGE_KEY = "udmurt_learned_words";
@@ -630,6 +647,78 @@
           learnedBtn.disabled = false;
           nextRound();
         }
+      });
+
+      // --- Сохранение в CSV ---
+      const saveBtn = document.getElementById("saveBtn");
+      saveBtn.addEventListener("click", () => {
+        if (learnedWords.size === 0) {
+          alert("Нет выученных слов для сохранения");
+          return;
+        }
+
+        let csv = "Russian,Udmurt\n";
+        for (const word of learnedWords) {
+          csv += `"${word}","${dict[word]}"\n`;
+        }
+
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", "learned_words.csv");
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+
+      // --- Загрузка из CSV ---
+      const loadBtn = document.getElementById("loadBtn");
+      const csvInput = document.getElementById("csvInput");
+
+      loadBtn.addEventListener("click", () => {
+        csvInput.click();
+      });
+
+      csvInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            const csv = event.target.result;
+            const lines = csv.trim().split("\n");
+
+            let addedCount = 0;
+            for (let i = 1; i < lines.length; i++) {
+              if (!lines[i].trim()) continue;
+
+              const matches = lines[i].match(/"([^"]*)","([^"]*)"/);
+              if (matches) {
+                const russianWord = matches[1].toLowerCase();
+                if (dict[russianWord]) {
+                  learnedWords.add(russianWord);
+                  addedCount++;
+                }
+              }
+            }
+
+            if (addedCount > 0) {
+              saveLearnedWords();
+              restoreLearnedWordsDisplay();
+              nextRound();
+              alert(`Загружено ${addedCount} слов`);
+            } else {
+              alert("Не найдено известных слов в файле");
+            }
+          } catch (error) {
+            alert("Ошибка при загрузке файла: " + error.message);
+          }
+        };
+        reader.readAsText(file, "utf-8");
+        csvInput.value = "";
       });
 
       // init
