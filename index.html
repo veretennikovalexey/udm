@@ -343,6 +343,20 @@
       .learned-word:after {
         content: " ";
       }
+
+      /* hint text */
+      .hint {
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%);
+        font-family: "Unbounded", sans-serif;
+        font-size: 0.65rem;
+        color: var(--muted);
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        z-index: 2;
+      }
     </style>
   </head>
   <body>
@@ -377,6 +391,8 @@
 
       <div class="feedback" id="feedback"></div>
     </div>
+
+    <div class="hint">CTRL+ENTER если знаете слово</div>
 
     <script>
       // Russian → Udmurt
@@ -514,7 +530,7 @@
         if (e.key === "Enter") check();
       });
 
-      learnedBtn.addEventListener("click", () => {
+      function markLearned() {
         const input = prompt("Пожалуйста, введите слово");
 
         // Если пользователь нажал Cancel
@@ -537,6 +553,15 @@
           nextRound();
         }
         // Иначе окно закрывается, логика не срабатывает
+      }
+
+      learnedBtn.addEventListener("click", markLearned);
+
+      document.addEventListener("keydown", (e) => {
+        if (e.ctrlKey && e.key === "Enter") {
+          e.preventDefault();
+          markLearned();
+        }
       });
 
       // init
