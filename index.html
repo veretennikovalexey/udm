@@ -356,6 +356,33 @@
         letter-spacing: 0.08em;
         text-transform: uppercase;
         z-index: 2;
+        white-space: nowrap;
+      }
+
+      /* reset button */
+      #resetBtn {
+        position: fixed;
+        bottom: 2rem;
+        left: 2rem;
+        background: transparent;
+        border: 1px solid var(--muted);
+        color: var(--muted);
+        font-family: "Unbounded", sans-serif;
+        font-size: 0.55rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.5em 0.8em;
+        cursor: pointer;
+        border-radius: 3px;
+        margin-bottom: 0;
+        transition: color 0.2s, border-color 0.2s;
+        z-index: 2;
+      }
+
+      #resetBtn:hover {
+        color: var(--wrong);
+        border-color: var(--wrong);
+        background: transparent;
       }
     </style>
   </head>
@@ -393,8 +420,11 @@
     </div>
 
     <div class="hint">CTRL+ENTER если знаете слово</div>
+    <button id="resetBtn">Сбросить прогресс</button>
 
     <script>
+      const STORAGE_KEY = "udmurt_learned_words";
+
       // Russian → Udmurt
       const dict = {
         я: "мон",
@@ -419,7 +449,26 @@
       let streak = 0;
       let feedbackTimer = null;
       let nextTimer = null;
-      let learnedWords = new Set(); // Track learned words
+
+      // --- localStorage: загружаем сохранённые слова ---
+      function loadLearnedWords() {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          return saved ? new Set(JSON.parse(saved)) : new Set();
+        } catch (e) {
+          return new Set();
+        }
+      }
+
+      function saveLearnedWords() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify([...learnedWords]));
+        } catch (e) {
+          console.warn("Не удалось сохранить прогресс:", e);
+        }
+      }
+
+      let learnedWords = loadLearnedWords();
 
       const wordEl = document.getElementById("word");
       const answerEl = document.getElementById("answer");
@@ -429,6 +478,18 @@
       const streakEl = document.getElementById("streak");
       const accentEl = document.getElementById("accent");
       const learnedWordsContainerEl = document.getElementById("learnedWords");
+      const resetBtn = document.getElementById("resetBtn");
+
+      // --- Восстанавливаем отображение выученных слов ---
+      function restoreLearnedWordsDisplay() {
+        learnedWordsContainerEl.innerHTML = "";
+        for (const word of learnedWords) {
+          const wordSpan = document.createElement("span");
+          wordSpan.className = "learned-word";
+          wordSpan.textContent = dict[word];
+          learnedWordsContainerEl.appendChild(wordSpan);
+        }
+      }
 
       function getAvailableWords() {
         return keys.filter((k) => !learnedWords.has(k));
@@ -459,7 +520,7 @@
           wordEl.textContent = word;
           wordEl.classList.remove("fade-out");
           wordEl.classList.remove("fade-in");
-          void wordEl.offsetWidth; // reflow
+          void wordEl.offsetWidth;
           wordEl.classList.add("fade-in");
         }, 260);
       }
@@ -533,18 +594,13 @@
       function markLearned() {
         const input = prompt("Пожалуйста, введите слово");
 
-        // Если пользователь нажал Cancel
-        if (input === null) {
-          return;
-        }
+        if (input === null) return;
 
-        // Проверяем правильность ввода
         const correct = dict[currentWord];
         if (input.trim().toLowerCase() === correct) {
-          // Правильно - добавляем слово
           learnedWords.add(currentWord);
+          saveLearnedWords(); // ← сохраняем в localStorage
 
-          // Add word to learned words display
           const wordSpan = document.createElement("span");
           wordSpan.className = "learned-word";
           wordSpan.textContent = dict[currentWord];
@@ -552,7 +608,6 @@
 
           nextRound();
         }
-        // Иначе окно закрывается, логика не срабатывает
       }
 
       learnedBtn.addEventListener("click", markLearned);
@@ -564,9 +619,28 @@
         }
       });
 
+      // --- Сброс прогресса ---
+      resetBtn.addEventListener("click", () => {
+        if (confirm("Сбросить весь прогресс? Все выученные слова вернутся.")) {
+          localStorage.removeItem(STORAGE_KEY);
+          learnedWords = new Set();
+          learnedWordsContainerEl.innerHTML = "";
+          answerEl.disabled = false;
+          checkBtn.disabled = false;
+          learnedBtn.disabled = false;
+          nextRound();
+        }
+      });
+
       // init
-      currentWord = keys[Math.floor(Math.random() * keys.length)];
-      wordEl.textContent = currentWord;
+      restoreLearnedWordsDisplay();
+      const available = getAvailableWords();
+      if (available.length > 0) {
+        currentWord = available[Math.floor(Math.random() * available.length)];
+        wordEl.textContent = currentWord;
+      } else {
+        showNoWordsMessage();
+      }
       answerEl.focus();
     </script>
   </body>
