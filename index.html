@@ -372,7 +372,8 @@
 
       #saveBtn,
       #loadBtn,
-      #resetBtn {
+      #resetBtn,
+      #helpBtn {
         background: transparent;
         border: 1px solid var(--muted);
         color: var(--muted);
@@ -391,7 +392,8 @@
 
       #saveBtn:hover,
       #loadBtn:hover,
-      #resetBtn:hover {
+      #resetBtn:hover,
+      #helpBtn:hover {
         color: var(--wrong);
         border-color: var(--wrong);
         background: transparent;
@@ -433,6 +435,7 @@
 
     <div class="hint">CTRL+ENTER если знаете слово</div>
     <div class="control-buttons">
+      <button id="helpBtn">Как учить?</button>
       <button id="saveBtn">Сохранить</button>
       <button id="loadBtn">Загрузить</button>
       <button id="resetBtn">Сбросить прогресс</button>
@@ -649,6 +652,14 @@
           learnedBtn.disabled = false;
           nextRound();
         }
+      });
+
+      // --- Справка "Как учить?" ---
+      const helpBtn = document.getElementById("helpBtn");
+      helpBtn.addEventListener("click", () => {
+        alert(
+          "Вам нужно ввести слово на удмурт кылын - т.е. на удмуртском языке. Если вы не знаете слово, то введите любой текст, например 1 и нажмите проверить. Если вы точно уже знаете слово нажмите я выучил(а). Чтобы сохранить список выученных слов в EXCEL нажмите сохранить",
+        );
       });
 
       // --- Сохранение в CSV ---
