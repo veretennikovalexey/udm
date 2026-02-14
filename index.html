@@ -103,6 +103,16 @@
         }
       }
 
+      // Новая функция для обновления текста в правом верхнем углу
+      function updateCounterText() {
+        const counterElement = document.querySelector(".counter");
+        if (counterElement) {
+          const totalWords = Object.keys(dict).length;
+          const learnedCount = learnedWords.size;
+          counterElement.textContent = `я знаю ${learnedCount} из ${totalWords}`;
+        }
+      }
+
       let learnedWords = loadLearnedWords();
 
       const wordEl = document.getElementById("word");
@@ -124,6 +134,7 @@
           wordSpan.textContent = dict[word];
           learnedWordsContainerEl.appendChild(wordSpan);
         }
+        updateCounterText();
       }
 
       function getAvailableWords() {
@@ -241,6 +252,7 @@
           wordSpan.textContent = dict[currentWord];
           learnedWordsContainerEl.appendChild(wordSpan);
 
+          updateCounterText();
           nextRound();
         }
       }
@@ -263,6 +275,7 @@
           answerEl.disabled = false;
           checkBtn.disabled = false;
           learnedBtn.disabled = false;
+          updateCounterText();
           nextRound();
         }
       });
@@ -344,6 +357,7 @@
             if (addedCount > 0) {
               saveLearnedWords();
               restoreLearnedWordsDisplay();
+              updateCounterText();
               nextRound();
               alert(`Загружено ${addedCount} слов`);
             } else {
