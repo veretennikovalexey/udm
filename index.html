@@ -250,12 +250,11 @@
       });
 
       function markLearned() {
-        const input = prompt("Пожалуйста, введите слово");
-
-        if (input === null) return;
-
+        const answerValue = answerEl.value.trim().toLowerCase();
         const correct = dict[currentWord];
-        if (input.trim().toLowerCase() === correct) {
+
+        if (answerValue && answerValue === correct) {
+          // Если поле заполнено и ответ правильный - добавляем в выученные слова
           learnedWords.add(currentWord);
           saveLearnedWords(); // ← сохраняем в localStorage
 
@@ -266,6 +265,24 @@
 
           updateCounterText();
           nextRound();
+        } else {
+          // Если поле пусто или ответ неправильный - показываем prompt
+          const input = prompt("Пожалуйста, введите слово");
+
+          if (input === null) return;
+
+          if (input.trim().toLowerCase() === correct) {
+            learnedWords.add(currentWord);
+            saveLearnedWords(); // ← сохраняем в localStorage
+
+            const wordSpan = document.createElement("span");
+            wordSpan.className = "learned-word";
+            wordSpan.textContent = dict[currentWord];
+            learnedWordsContainerEl.appendChild(wordSpan);
+
+            updateCounterText();
+            nextRound();
+          }
         }
       }
 
