@@ -254,6 +254,10 @@
         const correct = dict[currentWord];
 
         if (answerValue && answerValue === correct) {
+          // Очищаем все ожидающие таймеры перед переходом на новое слово
+          clearTimeout(feedbackTimer);
+          clearTimeout(nextTimer);
+          
           // Если поле заполнено и ответ правильный - добавляем в выученные слова
           learnedWords.add(currentWord);
           saveLearnedWords(); // ← сохраняем в localStorage
