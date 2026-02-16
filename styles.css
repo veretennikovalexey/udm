@@ -407,4 +407,9 @@ button:active {
   #loadBtn {
     display: none;
   }
+
+  .label,
+  .hint {
+    display: none;
+  }
 }
