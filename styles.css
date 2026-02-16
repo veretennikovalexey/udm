@@ -405,6 +405,11 @@ button:active {
 
 /* Mobile: hide help, save, load buttons on narrow screens */
 @media (max-width: 768px) {
+  body {
+    justify-content: flex-start;
+    padding-top: 0.5rem;
+  }
+
   #helpBtn,
   #saveBtn,
   #loadBtn,
@@ -428,7 +433,7 @@ button:active {
   .word-display {
     /* Мобильный режим: настройка размера шрифта вопроса */
     font-size: clamp(1.5rem, 4vw, 2.5rem);
-    margin-bottom: 0.3rem;
+    margin-bottom: 0.2rem;
   }
 
   input[type="text"] {
@@ -441,16 +446,17 @@ button:active {
   button {
     /* Мобильный режим: настройка размера шрифта кнопок */
     font-size: clamp(1rem, 2vw, 2rem);
+    margin-bottom: 0;
   }
 
   #learnedBtn {
     /* Мобильный режим: настройка размера шрифта кнопки "Выучила" */
     font-size: clamp(1rem, 2vw, 2rem);
-    padding: 0.4em 0.75em;
+    /* padding: 0.4em 0.75em;*/
   }
 
   .button-group {
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     gap: 0.5rem;
   }
 
@@ -466,10 +472,10 @@ button:active {
   }
 
   .input-wrap {
-    margin-bottom: 0.8rem;
+    margin-bottom: 0.5rem;
   }
 
   .accent-line {
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.8rem;
   }
 }
