@@ -404,12 +404,26 @@ button:active {
 @media (max-width: 768px) {
   #helpBtn,
   #saveBtn,
-  #loadBtn {
+  #loadBtn,
+  #resetBtn {
     display: none;
   }
 
   .label,
   .hint {
     display: none;
+  }
+
+  .input-wrap {
+    margin-bottom: 0.8rem;
+  }
+
+  .button-group {
+    margin-bottom: 1rem;
+  }
+
+  .feedback {
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    min-height: 1.2em;
   }
 }
