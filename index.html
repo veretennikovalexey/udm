@@ -97,6 +97,7 @@
       let streak = 0;
       let feedbackTimer = null;
       let nextTimer = null;
+      let waitingForKeyAfterWrongAnswer = false;
 
       // --- localStorage: загружаем сохранённые слова ---
       function loadLearnedWords() {
@@ -229,6 +230,7 @@
           answerEl.disabled = true;
           showFeedback("Ӟечок!");
           accentEl.style.width = "120px";
+          waitingForKeyAfterWrongAnswer = false;
           document.removeEventListener("keydown", handleWrongAnswerKey);
           nextTimer = setTimeout(() => {
             accentEl.style.width = "60px";
@@ -240,11 +242,18 @@
           answerEl.classList.add("wrong");
           showFeedback(`правильно: ${correct}`, true);
           setTimeout(() => answerEl.classList.remove("wrong"), 400);
-          document.addEventListener("keydown", handleWrongAnswerKey);
+          // Добавляем слушатель с задержкой, чтобы текущее событие не прошло на document
+          waitingForKeyAfterWrongAnswer = false;
+          setTimeout(() => {
+            waitingForKeyAfterWrongAnswer = true;
+            document.addEventListener("keydown", handleWrongAnswerKey);
+          }, 50);
         }
       }
 
       function handleWrongAnswerKey() {
+        if (!waitingForKeyAfterWrongAnswer) return;
+        waitingForKeyAfterWrongAnswer = false;
         document.removeEventListener("keydown", handleWrongAnswerKey);
         clearTimeout(feedbackTimer);
         nextRound();
