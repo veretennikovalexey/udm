@@ -89,6 +89,7 @@
         круг: "котырес",
         паук: "чонари",
         платок: "кышет",
+        "с добрым утром": "бур ӵукнаен",
       };
 
       const keys = Object.keys(dict);
@@ -257,7 +258,7 @@
           // Очищаем все ожидающие таймеры перед переходом на новое слово
           clearTimeout(feedbackTimer);
           clearTimeout(nextTimer);
-          
+
           // Если поле заполнено и ответ правильный - добавляем в выученные слова
           learnedWords.add(currentWord);
           saveLearnedWords(); // ← сохраняем в localStorage
