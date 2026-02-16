@@ -428,9 +428,9 @@ button:active {
   }
 
   input[type="text"] {
-    font-size: clamp(1rem, 3.5vw, 2rem);
+    font-size: clamp(0.33rem, 1.2vw, 0.67rem);
     padding: 0.25em 0.2em;
-    width: 50%;
+    width: 90vw;
   }
 
   button {
