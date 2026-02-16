@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Удмурт кыл — найди слово</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #1a0f0a;
+    --panel: #2b1a12;
+    --border: #8b4c2a;
+    --accent: #e8a246;
+    --accent2: #c0392b;
+    --text: #f0dfc0;
+    --dim: #a08060;
+    --cell-bg: #231408;
+    --cell-hover: #3a2010;
+    --cell-size: 52px;
+    --found-colors: #c0392b, #27ae60, #2980b9, #8e44ad, #d35400, #16a085;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Serif', serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 16px;
+    overflow-x: hidden;
+  }
+
+  h1 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    text-align: center;
+    margin-bottom: 4px;
+  }
+
+  .subtitle {
+    color: var(--dim);
+    font-size: 0.85rem;
+    text-align: center;
+    margin-bottom: 14px;
+    letter-spacing: 0.05em;
+  }
+
+  .game-area {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 900px;
+  }
+
+  .grid-wrapper {
+    flex-shrink: 0;
+  }
+
+  .ornament {
+    text-align: center;
+    color: var(--border);
+    font-size: 1.1rem;
+    letter-spacing: 4px;
+    margin-bottom: 6px;
+    user-select: none;
+  }
+
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(10, var(--cell-size));
+    grid-template-rows: repeat(10, var(--cell-size));
+    border: 2px solid var(--border);
+    background: var(--border);
+    gap: 1px;
+    user-select: none;
+  }
+
+  .cell {
+    width: var(--cell-size);
+    height: var(--cell-size);
+    background: var(--cell-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    font-family: 'Noto Serif', serif;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text);
+    transition: background 0.12s, color 0.12s, transform 0.08s;
+    position: relative;
+  }
+
+  .cell:hover {
+    background: var(--cell-hover);
+  }
+
+  .cell.selected-first {
+    color: #1a0f0a;
+    background: #e8a246;
+    transform: scale(1.08);
+    z-index: 2;
+  }
+
+  .cell.highlighted {
+    color: #1a0f0a;
+    background: #e8c870;
+  }
+
+  .cell.found {
+    color: #fff;
+    font-weight: 700;
+  }
+
+  /* sidebar */
+  .sidebar {
+    flex: 1;
+    min-width: 180px;
+  }
+
+  .sidebar-title {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 0.75rem;
+    color: var(--accent);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 6px;
+  }
+
+  .found-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .found-word {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    animation: popIn 0.3s ease;
+    font-size: 1rem;
+  }
+
+  .found-word .udmurt {
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+
+  .found-word .arrow {
+    color: var(--dim);
+    font-style: normal;
+  }
+
+  .found-word .russian {
+    color: var(--text);
+    font-style: italic;
+  }
+
+  @keyframes popIn {
+    from { transform: translateX(-10px); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+  }
+
+  /* progress */
+  .progress-bar-wrap {
+    margin-top: 14px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    height: 8px;
+    overflow: hidden;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.5s ease;
+  }
+
+  .progress-text {
+    font-size: 0.8rem;
+    color: var(--dim);
+    margin-top: 4px;
+    text-align: right;
+  }
+
+  .hint {
+    font-size: 0.8rem;
+    color: var(--dim);
+    margin-top: 12px;
+    line-height: 1.5;
+  }
+
+  .hint strong {
+    color: var(--accent);
+  }
+
+  .win-banner {
+    display: none;
+    text-align: center;
+    margin-top: 16px;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #27ae60, #1a8a4a);
+    border-radius: 8px;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 1rem;
+    color: #fff;
+    animation: popIn 0.5s ease;
+  }
+
+  #restart-btn {
+    display: block;
+    margin: 12px auto 0;
+    padding: 8px 20px;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: 4px;
+    font-family: 'Unbounded', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  #restart-btn:hover { background: #f0b860; }
+
+  .no-match-shake {
+    animation: shake 0.35s ease;
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20% { transform: translateX(-4px); }
+    60% { transform: translateX(4px); }
+  }
+</style>
+</head>
+<body>
+
+<h1>УДМУРТ КЫЛ</h1>
+<p class="subtitle">найди удмуртские слова в сетке</p>
+
+<div class="game-area">
+  <div class="grid-wrapper">
+    <div class="ornament">✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦</div>
+    <div id="grid"></div>
+    <div class="ornament">✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦ ✦</div>
+    <button id="restart-btn">↺ новая игра</button>
+  </div>
+
+  <div class="sidebar">
+    <div class="sidebar-title">найденные слова</div>
+    <div class="found-list" id="found-list"></div>
+    <div class="progress-bar-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+    <div class="progress-text" id="progress-text">0 / 0</div>
+    <div class="win-banner" id="win-banner">🎉 Умой! Все слова найдены!</div>
+    <div class="hint">
+      <strong>Как играть:</strong><br>
+      Кликни на первую букву слова — она станет жёлтой.<br>
+      Затем кликни на последнюю букву.<br>
+      Слова идут горизонтально и вертикально (в обе стороны).
+    </div>
+  </div>
+</div>
+
+<script>
+// ── словарь (удмурт → русский) ─────────────────────────────────────────────
+const DICT = {
+  "мон": "я",        "ныл": "дочь",    "пи": "сын",
+  "ӟуч": "русский",  "ӝук": "каша",    "бигер": "татарин",
+  "коӵо": "сорока",  "ӧс": "дверь",   "ӟоз": "кузнечик",
+  "ӧвӧл": "нет",     "умой": "хорошо", "ӟег": "рожь",
+  "тон": "ты",       "со": "он",       "яратон": "любовь",
+  "ми": "мы",        "коӵыш": "кошка", "тӥ": "вы",
+  "ӵӧж": "утка",     "ӝӧк": "стол",   "пӧзь": "варежка",
+  "пуны": "собака",  "ву": "вода",     "син": "глаз",
+  "ныр": "нос",      "тузон": "пыль",  "соос": "они",
+  "котырес": "круг", "чонари": "паук", "кышет": "платок"
+};
+
+const UDMURT_FILL = ['ӵ','ӧ','ӟ','ӥ','ӝ'];
+const RUSSIAN_FILL = 'абвгдеёжзийклмнопрстуфхцчшщъыьэюя'.split('');
+const FILL_CHARS = [...RUSSIAN_FILL, ...RUSSIAN_FILL, ...RUSSIAN_FILL, ...UDMURT_FILL];
+
+const GRID_SIZE = 10;
+const COLORS = [
+  '#b5451b','#1b7b45','#1b5fa8','#7b2b8e',
+  '#b5670a','#0a7b6e','#6e1b1b','#2b5c1b',
+  '#1b3b7b','#5c0a6e'
+];
+
+// ── глобальное состояние ───────────────────────────────────────────────────
+let grid = [];       // grid[row][col] = { letter, wordId, found }
+let placedWords = []; // [{word, translation, cells:[{r,c}], colorIdx}]
+let foundCount = 0;
+let firstClick = null;
+let colorCounter = 0;
+
+// ── генерация сетки ────────────────────────────────────────────────────────
+function initGame() {
+  grid = Array.from({length: GRID_SIZE}, () =>
+    Array.from({length: GRID_SIZE}, () => ({letter:'', wordId:-1, found:false}))
+  );
+  placedWords = [];
+  foundCount = 0;
+  firstClick = null;
+  colorCounter = 0;
+
+  const words = Object.keys(DICT);
+  // сортируем по убыванию длины — длинные сначала
+  const sorted = [...words].sort((a,b) => b.length - a.length);
+  const DIRS = [[0,1],[0,-1],[1,0],[-1,0]];
+
+  for (const word of sorted) {
+    let placed = false;
+    const shuffledDirs = shuffle([...DIRS]);
+    for (let attempt = 0; attempt < 120 && !placed; attempt++) {
+      const dir = shuffledDirs[attempt % 4];
+      const [dr, dc] = dir;
+      const len = [...word].length; // правильный подсчёт для Unicode
+      const letters = [...word];
+
+      // вычислить допустимые стартовые позиции
+      const rMin = dr > 0 ? 0 : (dr < 0 ? len-1 : 0);
+      const rMax = dr > 0 ? GRID_SIZE - len : (dr < 0 ? GRID_SIZE-1 : GRID_SIZE-1);
+      const cMin = dc > 0 ? 0 : (dc < 0 ? len-1 : 0);
+      const cMax = dc > 0 ? GRID_SIZE - len : (dc < 0 ? GRID_SIZE-1 : GRID_SIZE-1);
+
+      if (rMin > rMax || cMin > cMax) continue;
+
+      const r0 = rMin + Math.floor(Math.random() * (rMax - rMin + 1));
+      const c0 = cMin + Math.floor(Math.random() * (cMax - cMin + 1));
+
+      // проверяем наложение
+      let ok = true;
+      const cells = [];
+      for (let i = 0; i < len; i++) {
+        const r = r0 + dr*i;
+        const c = c0 + dc*i;
+        const existing = grid[r][c].letter;
+        if (existing !== '' && existing !== letters[i]) { ok = false; break; }
+        cells.push({r, c});
+      }
+
+      if (ok) {
+        const wordId = placedWords.length;
+        const ci = colorCounter % COLORS.length;
+        colorCounter++;
+        placedWords.push({word, translation: DICT[word], cells, colorIdx: ci, found: false});
+        for (let i = 0; i < len; i++) {
+          const {r, c} = cells[i];
+          grid[r][c].letter = letters[i];
+          if (grid[r][c].wordId === -1) grid[r][c].wordId = wordId;
+          // клетка может принадлежать нескольким словам — храним массив
+          if (!grid[r][c].wordIds) grid[r][c].wordIds = [];
+          grid[r][c].wordIds.push(wordId);
+        }
+        placed = true;
+      }
+    }
+    // если не удалось поместить — пропускаем слово
+  }
+
+  // заполняем пустые клетки
+  for (let r = 0; r < GRID_SIZE; r++) {
+    for (let c = 0; c < GRID_SIZE; c++) {
+      if (!grid[r][c].letter) {
+        grid[r][c].letter = FILL_CHARS[Math.floor(Math.random()*FILL_CHARS.length)];
+      }
+      if (!grid[r][c].wordIds) grid[r][c].wordIds = [];
+    }
+  }
+
+  renderGrid();
+  updateSidebar();
+}
+
+function shuffle(arr) {
+  for (let i = arr.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+  return arr;
+}
+
+// ── рендер сетки ──────────────────────────────────────────────────────────
+function renderGrid() {
+  const container = document.getElementById('grid');
+  container.innerHTML = '';
+  for (let r = 0; r < GRID_SIZE; r++) {
+    for (let c = 0; c < GRID_SIZE; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.textContent = grid[r][c].letter;
+      cell.dataset.r = r;
+      cell.dataset.c = c;
+      cell.addEventListener('click', onCellClick);
+      container.appendChild(cell);
+    }
+  }
+}
+
+function getCellEl(r, c) {
+  return document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+}
+
+// ── обработка кликов ───────────────────────────────────────────────────────
+function onCellClick(e) {
+  const r = parseInt(e.currentTarget.dataset.r);
+  const c = parseInt(e.currentTarget.dataset.c);
+
+  if (!firstClick) {
+    // первый клик
+    firstClick = {r, c};
+    const el = getCellEl(r, c);
+    el.classList.add('selected-first');
+  } else {
+    // второй клик
+    const r1 = firstClick.r, c1 = firstClick.c;
+    const r2 = r, c2 = c;
+
+    // снимаем выделение первого
+    getCellEl(r1, c1).classList.remove('selected-first');
+    firstClick = null;
+
+    // определяем направление
+    let cells = null;
+    if (r1 === r2 && c1 !== c2) {
+      // горизонталь
+      const step = c2 > c1 ? 1 : -1;
+      cells = [];
+      for (let col = c1; col !== c2 + step; col += step) cells.push({r: r1, c: col});
+    } else if (c1 === c2 && r1 !== r2) {
+      // вертикаль
+      const step = r2 > r1 ? 1 : -1;
+      cells = [];
+      for (let row = r1; row !== r2 + step; row += step) cells.push({r: row, c: c1});
+    } else if (r1 === r2 && c1 === c2) {
+      // одна и та же клетка — сбрасываем
+      return;
+    } else {
+      // диагональ — не поддерживается, ничего не делаем
+      return;
+    }
+
+    const word = cells.map(({r,c}) => grid[r][c].letter).join('');
+    checkWord(word, cells);
+  }
+}
+
+// ── проверка слова ─────────────────────────────────────────────────────────
+function checkWord(word, cells) {
+  // ищем слово среди размещённых (ещё не найденных)
+  for (let i = 0; i < placedWords.length; i++) {
+    const pw = placedWords[i];
+    if (pw.found) continue;
+    if (pw.word === word) {
+      // совпадение!
+      pw.found = true;
+      foundCount++;
+      highlightFoundWord(pw, cells);
+      addFoundToSidebar(pw);
+      updateProgress();
+      return;
+    }
+  }
+  // не нашли — кратко мигаем красным
+  cells.forEach(({r,c}) => {
+    const el = getCellEl(r,c);
+    el.classList.add('highlighted');
+  });
+  setTimeout(() => {
+    cells.forEach(({r,c}) => {
+      const el = getCellEl(r,c);
+      el.classList.remove('highlighted');
+    });
+  }, 400);
+}
+
+function highlightFoundWord(pw, _cells) {
+  const color = COLORS[pw.colorIdx];
+  pw.cells.forEach(({r,c}) => {
+    const el = getCellEl(r,c);
+    el.classList.remove('selected-first','highlighted');
+    el.classList.add('found');
+    el.style.background = color;
+  });
+}
+
+// ── боковая панель ─────────────────────────────────────────────────────────
+function addFoundToSidebar(pw) {
+  const list = document.getElementById('found-list');
+  const item = document.createElement('div');
+  item.className = 'found-word';
+  item.style.background = COLORS[pw.colorIdx] + '33';
+  item.style.borderLeft = `3px solid ${COLORS[pw.colorIdx]}`;
+  item.innerHTML = `<span class="udmurt" style="color:${COLORS[pw.colorIdx]}">${pw.word}</span>
+    <span class="arrow">→</span>
+    <span class="russian">${pw.translation}</span>`;
+  list.appendChild(item);
+}
+
+function updateSidebar() {
+  document.getElementById('found-list').innerHTML = '';
+  updateProgress();
+}
+
+function updateProgress() {
+  const total = placedWords.length;
+  const pct = total === 0 ? 0 : Math.round(foundCount / total * 100);
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = `${foundCount} / ${total}`;
+  if (foundCount === total && total > 0) {
+    document.getElementById('win-banner').style.display = 'block';
+  }
+}
+
+// ── запуск ────────────────────────────────────────────────────────────────
+document.getElementById('restart-btn').addEventListener('click', () => {
+  document.getElementById('win-banner').style.display = 'none';
+  initGame();
+});
+
+initGame();
+</script>
+</body>
+</html>
