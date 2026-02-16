@@ -229,6 +229,7 @@
           answerEl.disabled = true;
           showFeedback("Ӟечок!");
           accentEl.style.width = "120px";
+          document.removeEventListener("keydown", handleWrongAnswerKey);
           nextTimer = setTimeout(() => {
             accentEl.style.width = "60px";
             nextRound();
@@ -239,10 +240,14 @@
           answerEl.classList.add("wrong");
           showFeedback(`правильно: ${correct}`, true);
           setTimeout(() => answerEl.classList.remove("wrong"), 400);
-          feedbackTimer = setTimeout(() => {
-            nextRound();
-          }, 2500);
+          document.addEventListener("keydown", handleWrongAnswerKey);
         }
+      }
+
+      function handleWrongAnswerKey() {
+        document.removeEventListener("keydown", handleWrongAnswerKey);
+        clearTimeout(feedbackTimer);
+        nextRound();
       }
 
       checkBtn.addEventListener("click", check);

@@ -284,7 +284,7 @@ button:active {
 
 .feedback.wrong-text {
   color: var(--wrong);
-  font-size: clamp(1rem, 3vw, 1.5rem);
+  font-size: clamp(2rem, 6vw, 3rem);
   font-weight: 400;
   font-family: "Noto Serif", serif;
   letter-spacing: 0.02em;
