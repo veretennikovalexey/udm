@@ -238,7 +238,7 @@
           streakEl.textContent = streak;
           answerEl.classList.add("wrong");
           answerEl.disabled = true;
-          showFeedback(`правильно: ${correct}`, true);
+          showFeedback(`${correct}`, true);
           setTimeout(() => answerEl.classList.remove("wrong"), 400);
           // Добавляем слушатель с задержкой, чтобы текущее событие не прошло на document
           waitingForKeyAfterWrongAnswer = false;
