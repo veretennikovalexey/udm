@@ -228,7 +228,7 @@
           showFeedback("Ӟечок!");
           accentEl.style.width = "120px";
           waitingForKeyAfterWrongAnswer = false;
-          document.removeEventListener("keydown", handleWrongAnswerKey);
+          removeWrongAnswerListeners();
           nextTimer = setTimeout(() => {
             accentEl.style.width = "60px";
             nextRound();
@@ -244,15 +244,33 @@
           waitingForKeyAfterWrongAnswer = false;
           setTimeout(() => {
             waitingForKeyAfterWrongAnswer = true;
-            document.addEventListener("keydown", handleWrongAnswerKey);
+            addWrongAnswerListeners();
           }, 50);
         }
+      }
+
+      function removeWrongAnswerListeners() {
+        document.removeEventListener("keydown", handleWrongAnswerKey);
+        document.removeEventListener("touchstart", handleWrongAnswerTouch);
+      }
+
+      function addWrongAnswerListeners() {
+        document.addEventListener("keydown", handleWrongAnswerKey);
+        document.addEventListener("touchstart", handleWrongAnswerTouch);
       }
 
       function handleWrongAnswerKey() {
         if (!waitingForKeyAfterWrongAnswer) return;
         waitingForKeyAfterWrongAnswer = false;
-        document.removeEventListener("keydown", handleWrongAnswerKey);
+        removeWrongAnswerListeners();
+        clearTimeout(feedbackTimer);
+        nextRound();
+      }
+
+      function handleWrongAnswerTouch() {
+        if (!waitingForKeyAfterWrongAnswer) return;
+        waitingForKeyAfterWrongAnswer = false;
+        removeWrongAnswerListeners();
         clearTimeout(feedbackTimer);
         nextRound();
       }
