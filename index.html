@@ -96,6 +96,59 @@
       let nextTimer = null;
       let waitingForKeyAfterWrongAnswer = false;
 
+      // --- Функция для расчёта размера шрифта в зависимости от количества букв ---
+      function calculateQuestionFontSize(text) {
+        // Для вопроса: от 7rem (максимум) до 2.5rem (минимум)
+        const charCount = text.length;
+        const maxSize = 7; // в rem
+        const minSize = 2.5; // в rem
+        const baseChars = 8; // опорное количество букв для максимального размера
+        const maxChars = 25; // количество букв, при котором достигается минимальный размер
+
+        if (charCount <= baseChars) {
+          return maxSize + "rem";
+        } else if (charCount >= maxChars) {
+          return minSize + "rem";
+        } else {
+          // Линейная интерполяция между maxSize и minSize
+          const scale = (charCount - baseChars) / (maxChars - baseChars);
+          const fontSize = maxSize - scale * (maxSize - minSize);
+          return fontSize + "rem";
+        }
+      }
+
+      function calculateAnswerFontSize(text) {
+        // Для ответа: от 4rem (максимум) до 1.5rem (минимум)
+        const charCount = text.length;
+        const maxSize = 4; // в rem
+        const minSize = 1.5; // в rem
+        const baseChars = 8; // опорное количество букв для максимального размера
+        const maxChars = 25; // количество букв, при котором достигается минимальный размер
+
+        if (charCount <= baseChars) {
+          return maxSize + "rem";
+        } else if (charCount >= maxChars) {
+          return minSize + "rem";
+        } else {
+          // Линейная интерполяция между maxSize и minSize
+          const scale = (charCount - baseChars) / (maxChars - baseChars);
+          const fontSize = maxSize - scale * (maxSize - minSize);
+          return fontSize + "rem";
+        }
+      }
+
+      // Функция для обновления размера шрифта вопроса
+      function updateQuestionFontSize() {
+        const fontSize = calculateQuestionFontSize(currentWord);
+        wordEl.style.fontSize = fontSize;
+      }
+
+      // Функция для обновления размера шрифта ответа
+      function updateAnswerFontSize() {
+        const fontSize = calculateAnswerFontSize(answerEl.value);
+        answerEl.style.fontSize = fontSize;
+      }
+
       // --- localStorage: загружаем сохранённые слова ---
       function loadLearnedWords() {
         try {
@@ -179,6 +232,7 @@
           wordEl.classList.remove("fade-in");
           void wordEl.offsetWidth;
           wordEl.classList.add("fade-in");
+          updateQuestionFontSize(); // обновляем размер шрифта вопроса
         }, 260);
       }
 
@@ -193,6 +247,7 @@
         answerEl.value = "";
         answerEl.classList.remove("correct", "wrong");
         answerEl.disabled = false;
+        updateAnswerFontSize(); // обновляем размер шрифта ответа (на пустое поле)
         clearFeedback();
         answerEl.focus();
       }
@@ -279,6 +334,7 @@
       answerEl.addEventListener("keydown", (e) => {
         if (e.key === "Enter") check();
       });
+      answerEl.addEventListener("input", updateAnswerFontSize); // обновляем размер при вводе текста
 
       function markLearned() {
         const answerValue = answerEl.value.trim().toLowerCase();
@@ -441,9 +497,11 @@
       if (available.length > 0) {
         currentWord = available[Math.floor(Math.random() * available.length)];
         wordEl.textContent = currentWord;
+        updateQuestionFontSize(); // устанавливаем размер шрифта вопроса при инициализации
       } else {
         showNoWordsMessage();
       }
+      updateAnswerFontSize(); // устанавливаем размер шрифта ответа при инициализации
       answerEl.focus();
     </script>
   </body>
