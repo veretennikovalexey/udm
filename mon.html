@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Тренажёр клавиатуры</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=Unbounded:wght@200;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0c0d10;
+    --surface:   #13141a;
+    --border:    #1e2028;
+    --untyped:   #353840;
+    --typed:     #d4c9a8;
+    --cursor-bg: #c8a85a;
+    --cursor-fg: #0c0d10;
+    --error:     #c0504a;
+    --accent:    #c8a85a;
+    --muted:     #50555f;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--untyped);
+    font-family: 'JetBrains Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 60px 24px 80px;
+    user-select: none;
+  }
+
+  /* subtle grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    opacity: 0.35;
+    z-index: 0;
+  }
+
+  header {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    margin-bottom: 52px;
+  }
+
+  header h1 {
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 200;
+    font-size: clamp(11px, 1.6vw, 14px);
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  header .lang-tag {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    opacity: 0.7;
+    font-weight: 300;
+  }
+
+  /* progress bar */
+  .progress-wrap {
+    position: relative;
+    z-index: 1;
+    width: min(680px, 100%);
+    margin-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .progress-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  .progress-bar {
+    height: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent) 0%, #e8d48a 100%);
+    width: 0%;
+    transition: width 0.15s ease;
+    border-radius: 2px;
+  }
+
+  /* text area */
+  .text-container {
+    position: relative;
+    z-index: 1;
+    width: min(720px, 100%);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 40px 44px;
+    line-height: 2.15;
+    font-size: clamp(15px, 2.2vw, 18px);
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    outline: none;
+    cursor: text;
+    box-shadow: 0 0 0 0 transparent;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+
+  .text-container:focus-within,
+  .text-container.focused {
+    border-color: #2a2c35;
+    box-shadow: 0 0 40px -10px rgba(200, 168, 90, 0.08);
+  }
+
+  .text-block {
+    margin-bottom: 1.8em;
+  }
+  .text-block:last-child { margin-bottom: 0; }
+
+  .line { display: block; }
+  .line + .line { margin-top: 0; }
+
+  span.ch {
+    color: var(--untyped);
+    transition: color 0.08s ease;
+    position: relative;
+  }
+
+  span.ch.typed {
+    color: var(--typed);
+  }
+
+  span.ch.cursor {
+    color: var(--cursor-fg);
+    background: var(--cursor-bg);
+    border-radius: 2px;
+    animation: blink 1.1s step-end infinite;
+  }
+
+  span.ch.error {
+    color: var(--cursor-fg);
+    background: var(--error);
+    border-radius: 2px;
+    animation: shake 0.25s ease;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.3; }
+  }
+
+  @keyframes shake {
+    0%  { transform: translateX(0); }
+    25% { transform: translateX(-3px); }
+    75% { transform: translateX(3px); }
+    100%{ transform: translateX(0); }
+  }
+
+  /* completion overlay */
+  .done-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(12,13,16,0.9);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 20px;
+    backdrop-filter: blur(6px);
+  }
+
+  .done-overlay.visible { display: flex; }
+
+  .done-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 48px 56px;
+    text-align: center;
+    animation: popIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  }
+
+  @keyframes popIn {
+    from { opacity: 0; transform: scale(0.85); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .done-card h2 {
+    font-family: 'Unbounded', sans-serif;
+    font-weight: 400;
+    font-size: 22px;
+    color: var(--accent);
+    margin-bottom: 12px;
+    letter-spacing: 0.05em;
+  }
+
+  .done-card p {
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    margin-bottom: 32px;
+  }
+
+  .done-card button {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    padding: 12px 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: opacity 0.15s;
+  }
+
+  .done-card button:hover { opacity: 0.8; }
+
+  .hint {
+    position: relative;
+    z-index: 1;
+    margin-top: 28px;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    opacity: 0.6;
+  }
+
+  /* space char visual */
+  span.ch[data-ch=" "].cursor {
+    background: var(--cursor-bg);
+    border-radius: 2px;
+    min-width: 0.5ch;
+    display: inline-block;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Тренажёр клавиатуры</h1>
+  <div class="lang-tag">удмуртский язык · udmurt</div>
+</header>
+
+<div class="progress-wrap">
+  <div class="progress-meta">
+    <span id="pct">0%</span>
+    <span id="chars-done">0 / 0</span>
+  </div>
+  <div class="progress-bar">
+    <div class="progress-fill" id="progress-fill"></div>
+  </div>
+</div>
+
+<div class="text-container" id="text-container" tabindex="0">
+</div>
+
+<div class="hint">нажимай клавиши — пробел тоже считается</div>
+
+<div class="done-overlay" id="done-overlay">
+  <div class="done-card">
+    <h2>Готово!</h2>
+    <p>Текст пройден полностью</p>
+    <button onclick="restart()">Начать заново</button>
+  </div>
+</div>
+
+<script>
+  const lines = [
+    "мон тон со",
+    "ми тӥ соос",
+    "кин вылэ лыдӟон дугдоз",
+    "со ик чимали луоз"
+  ];
+
+  const REPEATS = 8;
+
+  // Build full text: 8 repetitions separated by blank line
+  let allLines = [];
+  for (let r = 0; r < REPEATS; r++) {
+    allLines.push(...lines);
+    if (r < REPEATS - 1) allLines.push(""); // blank separator
+  }
+
+  // Flatten chars (including spaces and newlines represented as \n)
+  // We'll render newlines as line breaks but track them in sequence
+  let sequence = []; // {char, spanEl}
+
+  const container = document.getElementById('text-container');
+
+  // Render
+  let blockEl = null;
+  let lineEl = null;
+
+  function newBlock() {
+    blockEl = document.createElement('div');
+    blockEl.className = 'text-block';
+    container.appendChild(blockEl);
+  }
+
+  function newLine() {
+    lineEl = document.createElement('span');
+    lineEl.className = 'line';
+    blockEl.appendChild(lineEl);
+  }
+
+  newBlock();
+
+  for (let i = 0; i < allLines.length; i++) {
+    const text = allLines[i];
+
+    if (text === "") {
+      // blank separator line = new block
+      newBlock();
+      newLine();
+      // add a thin spacer (non-typeable)
+      lineEl.innerHTML = '&nbsp;';
+      continue;
+    }
+
+    if (lineEl === null || i === 0) newLine();
+    else newLine();
+
+    for (let j = 0; j < text.length; j++) {
+      const ch = text[j];
+      const span = document.createElement('span');
+      span.className = 'ch';
+      span.dataset.ch = ch;
+      span.textContent = ch === ' ' ? '\u00a0' : ch;
+      lineEl.appendChild(span);
+      sequence.push({ char: ch, el: span });
+    }
+
+    // Add newline between lines within a block (except last line of block)
+    // handled by display:block on .line
+  }
+
+  const total = sequence.length;
+  let current = 0;
+
+  document.getElementById('chars-done').textContent = `0 / ${total}`;
+
+  function updateCursor() {
+    // remove cursor from all
+    sequence.forEach(s => s.el.classList.remove('cursor'));
+    if (current < total) {
+      sequence[current].el.classList.add('cursor');
+      // scroll into view
+      sequence[current].el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }
+
+  updateCursor();
+  container.focus();
+
+  function updateProgress() {
+    const pct = Math.round((current / total) * 100);
+    document.getElementById('pct').textContent = pct + '%';
+    document.getElementById('chars-done').textContent = `${current} / ${total}`;
+    document.getElementById('progress-fill').style.width = pct + '%';
+  }
+
+  let errorTimeout = null;
+
+  document.addEventListener('keydown', (e) => {
+    if (current >= total) return;
+
+    // ignore modifier-only keys
+    if (e.ctrlKey || e.altKey || e.metaKey) return;
+    if (['Shift','Control','Alt','Meta','CapsLock','Tab',
+         'Escape','ArrowLeft','ArrowRight','ArrowUp','ArrowDown',
+         'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12',
+         'Home','End','PageUp','PageDown','Insert','Delete','Backspace'].includes(e.key)) return;
+
+    e.preventDefault();
+
+    const expected = sequence[current].char;
+    const pressed  = e.key === ' ' ? ' ' : e.key;
+
+    const el = sequence[current].el;
+
+    if (pressed === expected) {
+      el.classList.remove('cursor', 'error');
+      el.classList.add('typed');
+      current++;
+      updateProgress();
+      if (current >= total) {
+        setTimeout(() => {
+          document.getElementById('done-overlay').classList.add('visible');
+        }, 300);
+      } else {
+        updateCursor();
+      }
+    } else {
+      // wrong key: flash error
+      el.classList.add('error');
+      el.classList.remove('cursor');
+      clearTimeout(errorTimeout);
+      errorTimeout = setTimeout(() => {
+        el.classList.remove('error');
+        el.classList.add('cursor');
+      }, 300);
+    }
+  });
+
+  container.addEventListener('focus', () => container.classList.add('focused'));
+  container.addEventListener('blur',  () => container.classList.remove('focused'));
+
+  function restart() {
+    current = 0;
+    sequence.forEach(s => {
+      s.el.classList.remove('typed','cursor','error');
+    });
+    updateCursor();
+    updateProgress();
+    document.getElementById('done-overlay').classList.remove('visible');
+    container.focus();
+  }
+
+  // click to focus
+  document.body.addEventListener('click', () => container.focus());
+</script>
+</body>
+</html>
