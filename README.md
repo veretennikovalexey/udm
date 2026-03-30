@@ -1,3 +1,6 @@
+tg://proxy?server=tgwh.magproxy.com&port=8443&secret=eeb30fc4df699024f7a5dec0b0e66524b16465762e6373373737372e766b2e7275
+
+
 # udm
 
 # Установка SOCKS5-сервера на Ubuntu Server в VirtualBox
