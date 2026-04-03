@@ -125,6 +125,10 @@
       transition: background 0.15s, color 0.15s;
     }
     .nav-buttons button:hover { background: #0f3460; color: #e2b96f; }
+    .nav-buttons button.step-btn {
+      font-size: 1.1rem;
+      padding: 7px 6px;
+    }
 
     @media (max-width: 700px) {
       .board-area { flex-direction: column; }
@@ -156,8 +160,10 @@
           <div id="move-list"></div>
         </div>
         <div class="nav-buttons">
-          <button id="btn-start">⏮ Начало</button>
-          <button id="btn-end">⏭ Конец</button>
+          <button id="btn-start">⏮</button>
+          <button id="btn-step-back" class="step-btn" title="Шаг назад  [←]">◀</button>
+          <button id="btn-step-fwd"  class="step-btn" title="Шаг вперёд [→]">▶</button>
+          <button id="btn-end">⏭</button>
         </div>
       </div>
     </div>
@@ -346,6 +352,38 @@
       updateTurnIndicator();
     }
 
+    // ── Step navigation (never deletes moves) ────────────────────────────────
+    function stepBack() {
+      if (savedMoves.length === 0 || currentIdx === -1) return;
+      currentIdx--;
+      isReviewing = currentIdx < savedMoves.length - 1;
+
+      if (currentIdx === -1) {
+        game.reset();
+        board.start(true);
+        isReviewing = true;
+      } else {
+        const move = savedMoves[currentIdx];
+        game.load(move.fen_after);
+        board.position(move.fen_after, true);
+      }
+
+      renderMoveList();
+      updateTurnIndicator();
+    }
+
+    function stepForward() {
+      if (currentIdx >= savedMoves.length - 1) return;
+      currentIdx++;
+      const move = savedMoves[currentIdx];
+      game.load(move.fen_after);
+      board.position(move.fen_after, true);
+      isReviewing = currentIdx < savedMoves.length - 1;
+
+      renderMoveList();
+      updateTurnIndicator();
+    }
+
     // ── chessboard.js callbacks ───────────────────────────────────────────────
     function onDragStart(source, piece) {
       if (isReviewing || currentIdx < savedMoves.length - 1) return false;
@@ -419,6 +457,14 @@
       document.getElementById('btn-redo').addEventListener('click', redoMove);
       document.getElementById('btn-start').addEventListener('click', goToStart);
       document.getElementById('btn-end').addEventListener('click', goToEnd);
+      document.getElementById('btn-step-back').addEventListener('click', stepBack);
+      document.getElementById('btn-step-fwd').addEventListener('click', stepForward);
+
+      document.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        if (e.key === 'ArrowLeft')  { e.preventDefault(); stepBack(); }
+        if (e.key === 'ArrowRight') { e.preventDefault(); stepForward(); }
+      });
       document.getElementById('btn-clear').addEventListener('click', () => {
         if (!confirm('Очистить всю партию?')) return;
         clearAllMoves();
