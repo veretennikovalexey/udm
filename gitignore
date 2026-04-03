@@ -1,0 +1,15 @@
+# Personal data - never commit
+clients.json
+organizations.json
+
+# .NET build output
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+
+# OS
+Thumbs.db
+.DS_Store
