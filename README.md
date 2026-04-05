@@ -1,273 +1,256 @@
-tg://proxy?server=tgwh.magproxy.com&port=8443&secret=eeb30fc4df699024f7a5dec0b0e66524b16465762e6373373737372e766b2e7275
-
-
-# udm
-
-# Установка SOCKS5-сервера на Ubuntu Server в VirtualBox
-
-> Инструкция по настройке SOCKS5-прокси сервера на базе Ubuntu Server в VirtualBox с подключением из Windows 10.
+# Project: alex-claude-contacts — VPS Setup Session
+**Date:** April 5, 2026  
+**Goal:** Set up a VPS in Russia to host a personal contacts web application (accessible from Mac, Windows, Android)
 
 ---
 
-## Содержание
+## Project Architecture
 
-1. [Установка VirtualBox](#1-установка-virtualbox)
-2. [Установка Ubuntu Server](#2-установка-ubuntu-server)
-3. [Первый вход и настройка SSH](#3-первый-вход-и-настройка-ssh)
-4. [Настройка проброса портов в VirtualBox](#4-настройка-проброса-портов-в-virtualbox)
-5. [Подключение по SSH из Windows](#5-подключение-по-ssh-из-windows)
-6. [Установка и настройка Dante SOCKS5](#6-установка-и-настройка-dante-socks5)
-7. [Проверка работы SOCKS5](#7-проверка-работы-socks5)
-8. [Как это работает](#8-как-это-работает)
-
----
-
-## 1. Установка VirtualBox
-
-### 1.1 Microsoft Visual C++ 2019 Redistributable
-
-VirtualBox 7.2.6 требует наличия **Microsoft Visual C++ 2019 Redistributable**.
-
-Скачай и установи:
-- https://aka.ms/vs/17/release/vc_redist.x64.exe
-
-### 1.2 VirtualBox
-
-Скачай установщик для Windows с официального сайта:
-- https://www.virtualbox.org/wiki/Downloads → **Windows hosts**
-
-Также скачай **VirtualBox Extension Pack** на той же странице и установи его через:
-`Файл → Инструменты → Extension Pack Manager`
-
----
-
-## 2. Установка Ubuntu Server
-
-### 2.1 Скачать образ
-
-Скачай Ubuntu Server LTS:
-- https://ubuntu.com/download/server → **Download Ubuntu Server 24.04 LTS** (~2 ГБ)
-
-### 2.2 Создать виртуальную машину
-
-В VirtualBox создай новую VM и укажи скачанный `.iso` файл как загрузочный диск.
-
-Рекомендуемые параметры:
-- RAM: минимум 1 ГБ (лучше 2 ГБ)
-- Диск: минимум 10 ГБ
-- Сеть: NAT (по умолчанию)
-
-### 2.3 Установка Ubuntu Server
-
-В процессе установки обрати внимание на:
-
-| Шаг | Что делать |
-|-----|-----------|
-| Язык / раскладка | English (стандарт для серверов) |
-| Hostname | Любое имя, например `ubuntu-server` |
-| Имя пользователя | Запомни! Нужен для входа |
-| Пароль | Запомни! Нужен для входа и sudo |
-| **OpenSSH server** | ✅ Обязательно поставить галочку |
-
-> Если галочку на OpenSSH не поставил — не страшно, SSH можно установить вручную после загрузки системы (см. п. 3.2).
-
----
-
-## 3. Первый вход и настройка SSH
-
-### 3.1 Первый вход
-
-После перезагрузки введи имя пользователя и пароль.
-
-> Пароль при вводе не отображается — это нормально.
-
-После успешного входа увидишь строку:
 ```
-username@hostname:~$
+Your Mac (write code here)
+        ↓ deploy via scp
+   VPS Server in St. Petersburg
+   ├── Nginx (serves frontend)
+   └── FastAPI (backend, handles contacts)
+        └── SQLite (database)
+        ↑
+Browser (Mac / Windows / Android)
 ```
 
-### 3.2 Установка OpenSSH (если не поставил при установке)
+**Stack:** FastAPI + SQLite + plain HTML/JS + Nginx on Ubuntu VPS
+
+**Access:** Via IP address in browser (no domain needed for now)
+
+**Security:** Password login page + brute-force protection (IP ban after N failed attempts)
+
+---
+
+## Step 1 — Choosing a VPS Provider
+
+### Providers Tried and Rejected
+
+- **4VPS.su** — cheapest (~80 RUB/month), servers in Moscow — **REJECTED: all servers SOLD OUT** (reason: Telegram blocking wave caused mass VPN server purchases)
+- **SprintHost (sprinthost.ru)** — 140 RUB/month, servers in St. Petersburg — initially considered too expensive and wrong city
+
+### Provider Chosen
+
+**SprintBox by SprintHost**  
+Website: [cp.sprintbox.ru](https://cp.sprintbox.ru)  
+Phone: **8-800-555-78-23** (free, 24/7)  
+Email: support@sprinthost.ru  
+Location: St. Petersburg ✅ (decided it's fine — latency difference vs Moscow is zero for our use case)
+
+**Tariff:** "Студент" (Student)
+- CPU: 1 core
+- RAM: 0.5 GB
+- NVMe: 7 GB
+- Price: **140 RUB/month**
+- Paid: 500 RUB upfront (~3.5 months)
+
+---
+
+## Step 2 — Creating the Box
+
+### Box Name
+```
+alex-claude-contacts-02
+```
+(alex-claude-contacts-01 was created with a custom ISO — see Errors section)
+
+### Server Details
+- IP address: `<ip address>`
+- Location: Russia, St. Petersburg
+- OS: Ubuntu 25.10 "Questing Quokka" (Server, no GUI)
+- User: `root`
+
+### Closed Ports (pre-configured by provider)
+```
+25, 389, 465, 587, 2525, 3389, 53413
+```
+These are not needed for our project.
+
+---
+
+## Step 3 — Connecting via SSH
+
+### First Connection (from Mac Terminal)
+Open Terminal on Mac: `Cmd + Space` → type "Terminal" → Enter
 
 ```bash
-sudo apt update && sudo apt install openssh-server -y
+ssh root@<ip address>
 ```
 
-### 3.3 Узнать IP-адрес Ubuntu
+First time you'll see:
+```
+The authenticity of host '<ip address>' can't be established.
+ED25519 key fingerprint is: SHA256:...
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+```
+Type `yes` and press Enter.
 
+### Changing the Expired Password
+On first login the server forces a password change:
+```
+WARNING: Your password has expired.
+You must change your password now and log in again!
+New password:
+```
+Enter your new password twice. After that the connection closes automatically. Reconnect:
 ```bash
-ip a
+ssh root@<ip address>
 ```
 
-В выводе найди строку с `inet` — нужен адрес вида `10.0.x.x` или `192.168.x.x`.
-
-В режиме NAT VirtualBox стандартный адрес: **`10.0.2.15`**
-
-### 3.4 Узнать имя сетевого интерфейса
-
-В выводе команды `ip a` найди строку с `inet 10.0.2.15` — **над ней** будет имя интерфейса.
-
-Стандартное имя в VirtualBox: **`enp0s3`**
+### Successful Login Output
+```
+Welcome to Ubuntu 25.10 (GNU/Linux 6.17.0-20-generic x86_64)
+...
+root@box-909266:~#
+```
+The prompt `root@box-909266:~#` means you are now controlling the server in St. Petersburg.
 
 ---
 
-## 4. Настройка проброса портов в VirtualBox
+## Step 4 — Setting Up SSH Keys (No More Password Prompts)
 
-Так как VM работает в режиме **NAT**, Windows не может напрямую подключиться к Ubuntu. Нужно настроить проброс портов.
-
-**VM можно не выключать.**
-
-Перейди в: `Настройки VM → Сеть → Адаптер 1 → Дополнительно → Проброс портов`
-
-Добавь два правила:
-
-| Имя | Протокол | Хост IP | Хост порт | Гость IP | Гость порт |
-|-----|----------|---------|-----------|----------|------------|
-| ssh | TCP | 127.0.0.1 | 2222 | 10.0.2.15 | 22 |
-| socks5 | TCP | 127.0.0.1 | 1080 | 10.0.2.15 | 1080 |
-
-Нажми **ОК**.
+Run this on your **Mac** (not on the server):
+```bash
+ssh-copy-id root@<ip address>
+```
+Enter the password one last time. After this, SSH and SCP work without any password.
 
 ---
 
-## 5. Подключение по SSH из Windows
+## Step 5 — Server Updates
 
-Открой **PowerShell** или **Командную строку** на Windows и выполни:
-
-```powershell
-ssh -p 2222 username@127.0.0.1
-```
-
-> Замени `username` на своё имя пользователя Ubuntu.
-
-При первом подключении система спросит подтвердить fingerprint — введи `yes`.
-
-После этого все команды можно вводить в окне Windows с поддержкой копипаста.
-
----
-
-## 6. Установка и настройка Dante SOCKS5
-
-### 6.1 Обновить систему
+After connecting to the server, run:
 
 ```bash
-sudo apt update && sudo apt upgrade -y
+apt update
 ```
-
-### 6.2 Установить Dante
+Updates the list of available packages.
 
 ```bash
-sudo apt install dante-server -y
+apt upgrade -y
 ```
-
-### 6.3 Настроить конфиг
-
-Запиши конфигурацию одной командой:
-
-```bash
-sudo tee /etc/danted.conf << 'EOF'
-logoutput: syslog
-
-internal: 0.0.0.0 port = 1080
-external: enp0s3
-
-clientmethod: none
-socksmethod: none
-
-user.privileged: root
-user.notprivileged: nobody
-
-client pass {
-    from: 0.0.0.0/0 to: 0.0.0.0/0
-    log: connect disconnect
-}
-
-socks pass {
-    from: 0.0.0.0/0 to: 0.0.0.0/0
-    log: connect disconnect
-}
-EOF
+Installs available updates. Output included:
 ```
-
-> Если имя интерфейса отличается от `enp0s3` — замени его на своё в строке `external:`.
-
-### 6.4 Запустить Dante
-
-```bash
-sudo systemctl restart danted
-```
-
-### 6.5 Проверить статус
-
-```bash
-sudo systemctl status danted
-```
-
-Должно быть:
-```
-Active: active (running)
-```
-
-### 6.6 Включить автозапуск при старте системы
-
-```bash
-sudo systemctl enable danted
+Upgrading: 1, Installing: 0, Removing: 0, Not Upgrading: 0
+1 standard LTS security update
+...
+No services need to be restarted.
 ```
 
 ---
 
-## 7. Проверка работы SOCKS5
+## Step 6 — Testing File Transfer (scp)
 
-На Windows в PowerShell выполни:
-
-```powershell
-curl.exe --proxy socks5://127.0.0.1:1080 https://api.ipify.org
-```
-
-> Обязательно `curl.exe`, а не `curl` — в PowerShell `curl` это псевдоним для другой команды.
-
-Если всё работает — получишь в ответ IP-адрес (это IP твоего интернет-провайдера, через который выходит Ubuntu).
-
----
-
-## 8. Как это работает
-
-```
-Windows (curl.exe)
-        ↓
-127.0.0.1:1080
-        ↓
-Проброс портов VirtualBox
-        ↓
-Ubuntu 10.0.2.15:1080 — Dante SOCKS5 сервер
-        ↓
-Интернет
-        ↓
-Ответ возвращается обратно по той же цепочке
-```
-
-**SOCKS5** — это протокол прокси, который позволяет направлять любой TCP/UDP трафик через сервер-посредник. В отличие от HTTP-прокси, SOCKS5 работает на более низком уровне и поддерживает любые приложения и протоколы.
-
----
-
-## Полезные команды
-
+### Create a test file on Mac
 ```bash
-# Статус Dante
-sudo systemctl status danted
-
-# Перезапустить Dante
-sudo systemctl restart danted
-
-# Остановить Dante
-sudo systemctl stop danted
-
-# Посмотреть логи Dante
-sudo journalctl -u danted -f
-
-# Посмотреть сетевой интерфейс и IP
-ip a
+echo "привет от Алекса" > файл.py
 ```
+
+### Copy it to the server
+```bash
+scp файл.py root@<ip address>:/root/
+```
+Output:
+```
+файл.py     100%   31     2.2KB/s   00:00
+```
+
+### Verify on the server
+```bash
+ls /root/
+cat *
+```
+Output:
+```
+файл.py
+привет от Алекса
+```
+✅ File successfully transferred from Mac to St. Petersburg server.
 
 ---
 
-*Инструкция составлена: март 2026*
+## Errors & Problems Encountered
+
+### ❌ Error 1: Custom ISO — Kernel Panic
+**What happened:** The first box (alex-claude-contacts-01) was created using a direct Ubuntu ISO link:
+```
+https://releases.ubuntu.com/22.04/ubuntu-22.04.5-live-server-amd64.iso
+```
+**Error shown in VNC console:**
+```
+Kernel panic - not syncing: No working init found.
+Try passing init= option to kernel.
+```
+**Reason:** SprintBox cannot automatically install Ubuntu from a raw ISO image. The ISO is an installer, not a ready-to-run image.  
+**Fix:** Delete the box, create a new one using SprintBox's built-in image list → "Линуксы" → Ubuntu.  
+**Cost:** Lost ~5 RUB from the failed box.
+
+### ❌ Error 2: "Reset root password" button was greyed out
+**What happened:** On the first (broken) box, the "Сброс пароля root" button in the control panel was unavailable.  
+**Reason:** The box was created from a custom ISO and never successfully booted, so the password reset system couldn't work.  
+**Fix:** Reinstall the box using a standard image, or delete and create a new box.
+
+### ❌ Error 3: No password in the welcome email
+**What happened:** After creating the second box, the welcome email did not contain the root password.  
+**Reason:** The box was created with the "Новый SSH-ключ" / password auth flow — the password was shown only during box creation in the control panel, not emailed separately.  
+**Fix:** In the control panel → three dots menu (⋮) next to the box → "Сброс пароля root" → new password is emailed.
+
+---
+
+## Additional Questions Asked During Session
+
+- **What is a VDS/VPS?** — A virtual slice of a real physical server. Like renting one room in a big building.
+- **What is Ubuntu 22.04 / 25.10?** — Version number = release year and month. Like Windows 10/11.
+- **What is NVMe?** — Fast type of storage disk. Evolution: HDD (spinning plates) → SSD (flash, no plates) → NVMe (flash + faster connection to CPU).
+- **What is RAM?** — Memory that loses everything when power is off. Unlike NVMe which keeps data permanently.
+- **Why is 0.5 GB RAM enough?** — Ubuntu Server has no graphical interface, so it uses very little RAM. Our simple app needs even less.
+- **What is a "Promo" tariff?** — Discounted entry-level plan to attract new customers. Slightly fewer resources but fine for our project.
+- **What does "4ms" mean?** — Ping latency (response time). 4 milliseconds = very fast, nearly instant.
+- **Why Moscow vs St. Petersburg?** — For our use case (single user, simple app) there is zero practical difference. St. Petersburg was chosen because SprintBox had available servers and good support.
+- **Does SprintHost only work in spring?** — No 😄 "Sprint" means a fast run, not the season.
+- **What is Happ app?** — A VPN/proxy client app for Android. ESET antivirus flags it because it routes traffic through external servers — that's the app's intended function, not a virus. The app does not collect user data.
+- **Why did we run apt update and apt upgrade?** — Like Windows Update. Patches security vulnerabilities before we start building.
+- **What does "deploy" mean?** — Copying your code from your local machine to the server so it runs there 24/7.
+
+---
+
+## What's Next (Next Session)
+
+1. Install Python3 + pip + venv on the server
+2. Ask Claude Opus to write the FastAPI backend (contacts CRUD + brute-force protection)
+3. Ask Claude Opus to write the frontend (HTML + CSS + JS, single file)
+4. Deploy both to the server via `scp`
+5. Install and configure Nginx
+6. Test from Mac, Windows, Android browser
+
+---
+
+## Useful Commands Reference
+
+| Command | What it does |
+|---|---|
+| `ssh root@<ip address>` | Connect to server |
+| `ssh-copy-id root@<ip address>` | Copy SSH key (no more passwords) |
+| `scp file.py root@<ip address>:/root/` | Copy file from Mac to server |
+| `apt update` | Refresh package list |
+| `apt upgrade -y` | Install updates |
+| `ls` | List files in current directory |
+| `pwd` | Show current directory path |
+| `cat filename` | Show file contents |
+| `Cmd + N` | New Terminal window on Mac |
+
+---
+
+## Provider Contact Info
+
+| Provider | Status | Phone | Notes |
+|---|---|---|---|
+| 4VPS.su | ❌ Rejected | — | All servers sold out |
+| SprintHost / SprintBox | ✅ Active | 8-800-555-78-23 | Our provider, free call |
+
+---
+
+*Session conducted with Claude Sonnet (claude.ai). Next session: use Claude Opus for code generation.*
